@@ -1,0 +1,14 @@
+pre-commit:
+  parallel: true
+  commands:
+    tidy:
+      glob: "**/*.go"
+      run: "go mod tidy && git diff --exit-code go.mod go.sum"
+    lint:
+      glob: "**/*.go"
+      run: "make lint"
+
+pre-push:
+  commands:
+    test:
+      run: "make test"

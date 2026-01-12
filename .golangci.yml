@@ -1,0 +1,60 @@
+version: "2"
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+linters:
+  enable:
+    # デフォルトlinter（必須）
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+
+    # セキュリティ
+    - gosec
+
+    # バグ検出
+    - bodyclose
+    - errorlint
+    - nilerr
+    - nilnil
+    - exhaustive
+    - wastedassign
+
+    # コード品質
+    - misspell
+    - revive
+    - gocognit
+    - gocyclo
+    - dupl
+    - goconst
+    - unparam
+    - unconvert
+    - copyloopvar
+
+  settings:
+    gocognit:
+      min-complexity: 30
+
+    gocyclo:
+      min-complexity: 30
+
+    revive:
+      rules:
+        - name: var-naming
+          disabled: true
+        - name: exported
+          disabled: true
+
+  exclusions:
+    rules:
+      - path: '_test\.go'
+        linters:
+          - dupl
+          - gocognit
+          - gocyclo
+          - errcheck
