@@ -17,6 +17,8 @@ const (
 
 type Player struct {
 	*Sprite
+	canShoot bool
+	onShoot  func(x, y float64) error
 }
 
 func (p *Player) Draw(screen *ebiten.Image) {
@@ -60,10 +62,26 @@ func (p *Player) Update() error {
 		p.VelocityX = 0
 	}
 
+	// スペースキーで射撃
+	if ebiten.IsKeyPressed(ebiten.KeySpace) {
+		if p.canShoot && p.onShoot != nil {
+			bulletX := p.X + p.Width/2
+			bulletY := p.Y
+
+			if err := p.onShoot(bulletX, bulletY); err != nil {
+				return err
+			}
+
+			p.canShoot = false
+		}
+	} else {
+		p.canShoot = true // キーを離したら次の射撃可能
+	}
+
 	return nil
 }
 
-func NewPlayer() (*Player, error) {
+func NewPlayer(onShoot func(x, y float64) error) (*Player, error) {
 	image, _, err := ebitenutil.NewImageFromFile("./assets/img/sprite_ship.png")
 	if err != nil {
 		return nil, fmt.Errorf("failed to load image: %w", err)
@@ -78,7 +96,7 @@ func NewPlayer() (*Player, error) {
 	initialY := ScreenHeight - shipHeight - 5
 
 	return &Player{
-		&Sprite{
+		Sprite: &Sprite{
 			Image:  image,
 			Scale:  scale,
 			Width:  shipWidth,
@@ -86,5 +104,7 @@ func NewPlayer() (*Player, error) {
 			X:      initialX,
 			Y:      initialY,
 		},
+		canShoot: true,
+		onShoot:  onShoot,
 	}, nil
 }

@@ -10,7 +10,8 @@ const (
 )
 
 type Game struct {
-	player *Player
+	player  *Player
+	bullets []*Bullet
 }
 
 type GameObject interface {
@@ -19,11 +20,34 @@ type GameObject interface {
 }
 
 func (g *Game) Update() error {
-	return g.player.Update()
+	if err := g.player.Update(); err != nil {
+		return err
+	}
+
+	for _, bullet := range g.bullets {
+		if err := bullet.Update(); err != nil {
+			return err
+		}
+	}
+
+	// 画面外の弾を削除
+	activeBullets := []*Bullet{}
+	for _, bullet := range g.bullets {
+		if !bullet.IsOutOfScreen() {
+			activeBullets = append(activeBullets, bullet)
+		}
+	}
+	g.bullets = activeBullets
+
+	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	g.player.Draw(screen)
+
+	for _, bullet := range g.bullets {
+		bullet.Draw(screen)
+	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -42,12 +66,26 @@ func (g *Game) Run() error {
 }
 
 func New() (*Game, error) {
-	player, err := NewPlayer()
+	g := &Game{
+		bullets: []*Bullet{},
+	}
+
+	// プレイヤーの射撃コールバックを設定
+	onShoot := func(x, y float64) error {
+		bullet, err := NewBullet(x, y, PlayerBullet)
+		if err != nil {
+			return err
+		}
+		g.bullets = append(g.bullets, bullet)
+		return nil
+	}
+
+	player, err := NewPlayer(onShoot)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Game{
-		player: player,
-	}, nil
+	g.player = player
+
+	return g, nil
 }
